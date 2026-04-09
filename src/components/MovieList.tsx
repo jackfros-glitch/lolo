@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import MovieCard from './MovieCard'
 import { fetchData } from '@/utils/fetchData'
+import { useAppStore } from '@/store/appStore'
 
 const MovieList = () => {
     const movieUrl = process.env.NEXT_PUBLIC_MOVIE_URL ?? process.env.MOVIE_URL ?? '';
@@ -15,27 +16,29 @@ const MovieList = () => {
     )
 
     const [currentPage, setCurrentPage] = useState<number>(1);
-    const [movies, setMovies] = useState<any | null>(null);
-    const [error, setError] = useState<string | null>(null);
+    const movies = useAppStore((state) => state.movies);
+    const setMovies = useAppStore((state) => state.setMovies);
     const [loading, setLoading] = useState<boolean>(true);
 
     useEffect(() => {
         const fetchMovies = async () => {
             setLoading(true);
-            setError(null);
+            // setError(null);
 
             if (!movieUrl) {
-                setError('Missing MOVIE_URL. Set NEXT_PUBLIC_MOVIE_URL in your env.');
                 setLoading(false);
-                return;
+                throw new Error('Missing MOVIE_URL. Set NEXT_PUBLIC_MOVIE_URL in your env.');
+                // setError('Missing MOVIE_URL. Set NEXT_PUBLIC_MOVIE_URL in your env.');   
             }
 
             try {
                 const data = await fetchData(movieUrl, { page: currentPage, headers });
                 setMovies(data);
             } catch (fetchError) {
-                setError('Unable to load movies. Please check your API URL and key.');
                 setMovies(null);
+                throw new Error('Unable to load movies. Please check your API URL and key.');
+                // setError('Unable to load movies. Please check your API URL and key.');
+                
             } finally {
                 setLoading(false);
             }
@@ -60,9 +63,9 @@ const MovieList = () => {
         return <div className="py-10 text-center text-gray-600">Loading movies...</div>
     }
 
-    if (error) {
-        return <div className="py-10 text-center text-red-600">{error}</div>
-    }
+    // if (error) {
+    //     return <div className="py-10 text-center text-red-600">{error}</div>
+    // }
 
     return (
         <>
@@ -71,6 +74,7 @@ const MovieList = () => {
                 movies.results.map((movie: any) => (
                     <MovieCard
                         key={movie.id}
+                        id={movie.id}
                         name={movie.title}
                         thumbnail={
                             movie.original_language === 'en'
